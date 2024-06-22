@@ -32,9 +32,9 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/login", "/signup", "/api", "/h2-console/**")
+                        auth.requestMatchers("/auth/signup", "/auth/login", "/h2-console/**")
                                 .permitAll().anyRequest().authenticated())
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**", "/auth/login"))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
@@ -54,7 +54,7 @@ public class WebSecurityConfig {
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web -> web.ignoring().requestMatchers("/login", "/signup", "/h2-console/**"));
+        return (web -> web.ignoring().requestMatchers("/auth/login", "/auth/signup", "/h2-console/**"));
     }
 
     @Bean

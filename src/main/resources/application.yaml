@@ -1,4 +1,5 @@
-#spring.application.name=auth-service
+server:
+  port: 8081
 spring:
   datasource:
     url: jdbc:h2:mem:mydb
@@ -13,6 +14,13 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     defer-datasource-initialization: true
     open-in-view: false
+  application:
+    name: auth-service
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
 
 logging:
   level:
