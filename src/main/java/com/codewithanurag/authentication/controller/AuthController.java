@@ -24,7 +24,7 @@ public class AuthController {
         return authService.login(authenticationRequest.getUsername(), authenticationRequest.getPassword());
     }
 
-    @PostMapping(value = "/signup", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
     public String createAuthenticationToken(@RequestBody SignUp signUp) {
         return authService.signUp(signUp);
     }

@@ -30,7 +30,7 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/auth/signup", "/auth/login", "/h2-console/**")
+                        auth.requestMatchers("/auth/register", "/auth/login", "/h2-console/**")
                                 .permitAll().anyRequest().authenticated())
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**", "/auth/login"))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
@@ -52,6 +52,6 @@ public class WebSecurityConfig {
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web -> web.ignoring().requestMatchers("/auth/login", "/auth/signup", "/h2-console/**"));
+        return (web -> web.ignoring().requestMatchers("/auth/login", "/auth/register", "/h2-console/**"));
     }
 }
