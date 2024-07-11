@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -30,9 +31,10 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/auth/register", "/auth/login", "/h2-console/**")
+                        auth.requestMatchers("/auth/register", "/auth/login", "/auth/csrf-token", "/h2-console/**")
                                 .permitAll().anyRequest().authenticated())
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**", "/auth/login"))
+                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())//TODO:need to check CSRF info.
+                        .ignoringRequestMatchers("/h2-console/**", "/auth/login"))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
@@ -52,6 +54,6 @@ public class WebSecurityConfig {
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web -> web.ignoring().requestMatchers("/auth/login", "/auth/register", "/h2-console/**"));
+        return (web -> web.ignoring().requestMatchers("/auth/login", "/auth/register", "/auth/csrf-token", "/h2-console/**"));
     }
 }
