@@ -36,7 +36,7 @@ public class AuthController {
         String csrfTokenStr = request.getHeader("X-XSRF-TOKEN");
         if (csrfTokenStr != null) {
             //TODO: Need to check csrf
-            response.setHeader(CsrfToken.class.getName(), csrfTokenStr);
+            response.setHeader("X-XSRF-TOKEN", csrfTokenStr);
         }
         return "Logged in successfully";
     }
@@ -45,6 +45,24 @@ public class AuthController {
     public String createAuthenticationToken(@RequestBody SignUp signUp) {
         return authService.signUp(signUp);
     }
+
+    @PostMapping("/logout")
+    public String logout(HttpServletRequest request, HttpServletResponse response) {
+        // Invalidate JWT Token (optional: depends on your strategy)
+        // Clear JWT cookie
+        Cookie jwtCookie = new Cookie("jwt", null);
+        jwtCookie.setHttpOnly(true);
+        jwtCookie.setSecure(true);
+        jwtCookie.setPath("/");
+        jwtCookie.setMaxAge(0); // Delete the cookie
+        response.addCookie(jwtCookie);
+
+        // Invalidate session (if applicable)
+        request.getSession().invalidate();
+
+        return "Logged out successfully";
+    }
+
 
     @GetMapping("/csrf-token")
     public CsrfToken csrfToken(HttpServletRequest request) {

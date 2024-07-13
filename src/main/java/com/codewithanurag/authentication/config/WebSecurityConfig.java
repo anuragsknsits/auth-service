@@ -1,5 +1,6 @@
 package com.codewithanurag.authentication.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -35,6 +36,10 @@ public class WebSecurityConfig {
                                 .permitAll().anyRequest().authenticated())
                 .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())//TODO:need to check CSRF info.
                         .ignoringRequestMatchers("/h2-console/**", "/auth/login"))
+                .logout(logout -> logout.logoutUrl("/auth/logout")
+                        .deleteCookies("JSESSIONID", "jwt")
+                        .invalidateHttpSession(true)
+                        .logoutSuccessHandler((request, response, authentication) -> response.setStatus(HttpServletResponse.SC_OK)))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
