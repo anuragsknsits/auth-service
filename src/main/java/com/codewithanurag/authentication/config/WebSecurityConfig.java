@@ -32,12 +32,12 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/auth/register", "/auth/login", "/auth/csrf-token", "/h2-console/**")
+                        auth.requestMatchers("/auth/register", "/auth/login", "/auth/logout", "/auth/csrf-token", "/h2-console/**")
                                 .permitAll().anyRequest().authenticated())
-                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())//TODO:need to check CSRF info.
+                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .ignoringRequestMatchers("/h2-console/**", "/auth/login"))
                 .logout(logout -> logout.logoutUrl("/auth/logout")
-                        .deleteCookies("JSESSIONID", "jwt")
+                        .deleteCookies("JSESSIONID", "jwt", "XSRF-TOKEN")
                         .invalidateHttpSession(true)
                         .logoutSuccessHandler((request, response, authentication) -> response.setStatus(HttpServletResponse.SC_OK)))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
@@ -59,6 +59,6 @@ public class WebSecurityConfig {
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web -> web.ignoring().requestMatchers("/auth/login", "/auth/register", "/auth/csrf-token", "/h2-console/**"));
+        return (web -> web.ignoring().requestMatchers("/auth/login", "/auth/register", "/auth/logout", "/auth/csrf-token", "/h2-console/**"));
     }
 }
