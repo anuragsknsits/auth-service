@@ -32,12 +32,6 @@ public class AuthController {
         jwtCookie.setMaxAge(24 * 60 * 60);
         response.addCookie(jwtCookie);
 
-        // Get CSRF token
-        String csrfTokenStr = request.getHeader("X-XSRF-TOKEN");
-        if (csrfTokenStr != null) {
-            //TODO: Need to check csrf
-            response.setHeader("X-XSRF-TOKEN", csrfTokenStr);
-        }
         return "Logged in successfully";
     }
 
