@@ -60,4 +60,8 @@ public class AuthServiceImpl implements AuthService {
         }
         return null;
     }
+
+    public String getUserName(String token) {
+        return jwtUtil.extractUserName(token);
+    }
 }
