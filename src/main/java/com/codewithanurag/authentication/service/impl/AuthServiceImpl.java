@@ -34,13 +34,17 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public String signUp(SignUp signUp) {
 
-        userRepository.findByUserName(signUp.getUsername()).ifPresent(userEntity -> {
-            throw new UserExistException(" User name " + signUp.getUsername() + " already exists Please try another username");
+        userRepository.findByEmailId(signUp.getEmailId()).ifPresent(userEntity -> {
+            throw new UserExistException(" User name " + signUp.getEmailId() + " already exists Please try another username");
         });
 
-        UserEntity userEntity = userRepository.save(UserEntity.builder().userName(signUp.getUsername())
-                .password(signUp.getPassword()).role(signUp.getRole()).build());
-        return userEntity.getUserName();
+        UserEntity userEntity = userRepository.save(
+                UserEntity.builder()
+                        .firstName(signUp.getFirstName())
+                        .lastName(signUp.getLastName())
+                        .emailId(signUp.getEmailId())
+                        .password(signUp.getPassword()).role(signUp.getRole()).build());
+        return userEntity.getFirstName();
     }
 
     @Override
