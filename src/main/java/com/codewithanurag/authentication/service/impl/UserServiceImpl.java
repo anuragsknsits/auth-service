@@ -1,7 +1,7 @@
 package com.codewithanurag.authentication.service.impl;
 
 import com.codewithanurag.authentication.entity.Role;
-import com.codewithanurag.authentication.entity.User;
+import com.codewithanurag.authentication.entity.UserDTO;
 import com.codewithanurag.authentication.model.AuthenticationRequest;
 import com.codewithanurag.authentication.model.SignUp;
 import com.codewithanurag.authentication.repository.EmployeeRoleAssignmentRepository;
@@ -35,24 +35,24 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void registerUser(SignUp signUp) {
-        User user = new User();
-        user.setEmail(signUp.getEmailId());
-        user.setPassword(passwordEncoder.encode(signUp.getPassword()));
-        user.setFirstName(signUp.getFirstName());
-        user.setLastName(signUp.getLastName());
-        user.setActive(true);
+        UserDTO userDTO = new UserDTO();
+        userDTO.setEmail(signUp.getEmailId());
+        userDTO.setPassword(passwordEncoder.encode(signUp.getPassword()));
+        userDTO.setFirstName(signUp.getFirstName());
+        userDTO.setLastName(signUp.getLastName());
+        userDTO.setActive(true);
 
         Role role = roleRepository.findByName(signUp.getRole()).orElseThrow(() -> new RuntimeException("Role not found"));
 
-        user.setRole(role);
-        userRepository.save(user);
+        userDTO.setRole(role);
+        userRepository.save(userDTO);
     }
 
     @Override
     public String authenticateUser(AuthenticationRequest authenticationRequest) {
-        User user = userRepository.findByEmail(authenticationRequest.getEmailId()).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        if (user != null && passwordEncoder.matches(authenticationRequest.getPassword(), user.getPassword())) {
-            return jwtUtil.generateToken(user.getEmail());
+        UserDTO userDTO = userRepository.findByEmail(authenticationRequest.getEmailId()).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        if (userDTO != null && passwordEncoder.matches(authenticationRequest.getPassword(), userDTO.getPassword())) {
+            return jwtUtil.generateToken(userDTO.getEmail());
         }
         throw new RuntimeException("Invalid credentials");
     }
@@ -66,7 +66,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void updateUser(Long userId, SignUp signUp) {
         // Find existing user
-        User user = userRepository.findById(userId)
+        UserDTO userDTO = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Find role based on roleId
@@ -74,29 +74,29 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new RuntimeException("Role not found"));
 
         // Update user details
-        user.setEmail(signUp.getEmailId());
-        user.setPassword(passwordEncoder.encode(signUp.getPassword()));
-        user.setFirstName(signUp.getFirstName());
-        user.setLastName(signUp.getLastName());
-        user.setRole(role);
+        userDTO.setEmail(signUp.getEmailId());
+        userDTO.setPassword(passwordEncoder.encode(signUp.getPassword()));
+        userDTO.setFirstName(signUp.getFirstName());
+        userDTO.setLastName(signUp.getLastName());
+        userDTO.setRole(role);
 
-        userRepository.save(user);
+        userRepository.save(userDTO);
     }
 
     @Override
     public void deleteUser(Long userId) {
         // Find existing user
-        User user = userRepository.findById(userId)
+        UserDTO userDTO = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Make user inactive
-        user.setActive(false);
+        userDTO.setActive(false);
 
         // Optionally: Remove user from role assignments (if applicable)
-        employeeRoleAssignmentRepository.deleteByUserId(userId); // Assuming this method exists
+//        employeeRoleAssignmentRepository.deleteByUserDTO_Id(userId); // Assuming this method exists
 
         // Save the updated user entity
-        userRepository.save(user);
+        userRepository.save(userDTO);
     }
 }
 

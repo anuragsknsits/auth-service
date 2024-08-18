@@ -1,11 +1,13 @@
 package com.codewithanurag.authentication.repository;
 
-import com.codewithanurag.authentication.entity.User;
+import com.codewithanurag.authentication.entity.UserDTO;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByEmail(String email);
+@Repository
+public interface UserRepository extends JpaRepository<UserDTO, Long> {
+    Optional<UserDTO> findByEmail(String email);
 }
 
