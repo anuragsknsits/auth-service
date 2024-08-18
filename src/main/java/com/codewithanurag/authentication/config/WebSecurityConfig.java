@@ -11,7 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -20,36 +20,43 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig {
-    private final UserDetailsService userDetailService;
+
+    private final UserDetailsService userDetailsService;
     private final JwtFilter jwtFilter;
 
-    public WebSecurityConfig(UserDetailsService userDetailService, JwtFilter jwtFilter) {
-        this.userDetailService = userDetailService;
+    public WebSecurityConfig(UserDetailsService userDetailsService, JwtFilter jwtFilter) {
+        this.userDetailsService = userDetailsService;
         this.jwtFilter = jwtFilter;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
-                .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/auth/register", "/auth/login", "/auth/logout", "/auth/csrf-token", "/h2-console/**")
-                                .permitAll().anyRequest().authenticated())
-                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/auth/register", "/auth/login", "/auth/logout", "/auth/csrf-token", "/h2-console/**")
+                        .permitAll()
+                        .requestMatchers("/users/**").hasAnyAuthority("ADMIN", "MANAGER", "HR", "CLERK", "ENDUSER")
+                        .requestMatchers("/roles/**").hasAuthority("ADMIN")
+                        .anyRequest().authenticated())
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .ignoringRequestMatchers("/h2-console/**", "/auth/login"))
-                .logout(logout -> logout.logoutUrl("/auth/logout")
+                .logout(logout -> logout
+                        .logoutUrl("/auth/logout")
                         .deleteCookies("JSESSIONID", "jwt", "XSRF-TOKEN")
                         .invalidateHttpSession(true)
                         .logoutSuccessHandler((request, response, authentication) -> response.setStatus(HttpServletResponse.SC_OK)))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Use stateless session
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-                .userDetailsService(userDetailService)
+                .userDetailsService(userDetailsService)
                 .build();
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return NoOpPasswordEncoder.getInstance();
+        return new BCryptPasswordEncoder(); // Use BCrypt for stronger password encoding
     }
 
     @Bean
@@ -59,6 +66,8 @@ public class WebSecurityConfig {
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web -> web.ignoring().requestMatchers("/auth/login", "/auth/register", "/auth/logout", "/auth/csrf-token", "/h2-console/**"));
+        return (web -> web
+                .ignoring()
+                .requestMatchers("/auth/login", "/auth/register", "/auth/logout", "/auth/csrf-token", "/h2-console/**"));
     }
 }

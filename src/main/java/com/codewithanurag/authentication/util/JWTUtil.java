@@ -17,18 +17,24 @@ import java.util.function.Function;
 @Component
 public class JWTUtil {
     private static final String SECRET_KEY = "cGFzc3dvcmRAdmthZEFzc29jaWF0ZSNUcnVlQ29kZXI=";
+    long expiration = 1000 * 60 * 60 * 10;
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, userDetails);
+        return createToken(claims, userDetails.getUsername());
     }
 
-    private String createToken(Map<String, Object> claims, UserDetails userDetails) {
+    public String generateToken(String email) {
+        Map<String, Object> claims = new HashMap<>();
+        return createToken(claims, email);
+    }
+
+    private String createToken(Map<String, Object> claims, String userDetails) {
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(userDetails.getUsername())
+                .setSubject(userDetails)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
