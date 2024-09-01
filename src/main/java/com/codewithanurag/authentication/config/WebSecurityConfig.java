@@ -33,10 +33,10 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/register", "/auth/login", "/auth/logout", "/auth/csrf-token", "/h2-console/**")
+                        .requestMatchers("/roles", "/auth/register", "/auth/login", "/auth/logout", "/auth/csrf-token", "/h2-console/**")
                         .permitAll()
                         .requestMatchers("/users/**").hasAnyAuthority("ADMIN", "MANAGER", "HR", "CLERK", "ENDUSER")
-                        .requestMatchers("/roles/**").hasAuthority("ADMIN")
+                        /*.requestMatchers("/roles/**").hasAuthority("ADMIN")*/
                         .anyRequest().authenticated())
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
@@ -56,7 +56,7 @@ public class WebSecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // Use BCrypt for stronger password encoding
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
@@ -68,6 +68,6 @@ public class WebSecurityConfig {
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web -> web
                 .ignoring()
-                .requestMatchers("/auth/login", "/auth/register", "/auth/logout", "/auth/csrf-token", "/h2-console/**"));
+                .requestMatchers("/roles", "/auth/login", "/auth/register", "/auth/logout", "/auth/csrf-token", "/h2-console/**"));
     }
 }

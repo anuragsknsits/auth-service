@@ -19,7 +19,7 @@ import java.util.Optional;
 
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/a")
 public class AuthController {
 
     private final AuthServiceImpl authService;
