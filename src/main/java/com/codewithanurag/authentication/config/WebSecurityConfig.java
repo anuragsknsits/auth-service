@@ -33,7 +33,7 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/roles", "/auth/register", "/auth/login", "/auth/logout", "/auth/csrf-token", "/h2-console/**")
+                        .requestMatchers("/roles", "/register", "/auth/login", "/auth/logout", "/auth/csrf-token", "/h2-console/**")
                         .permitAll()
                         .requestMatchers("/users/**").hasAnyAuthority("ADMIN", "MANAGER", "HR", "CLERK", "ENDUSER")
                         /*.requestMatchers("/roles/**").hasAuthority("ADMIN")*/
@@ -68,6 +68,6 @@ public class WebSecurityConfig {
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web -> web
                 .ignoring()
-                .requestMatchers("/roles", "/auth/login", "/auth/register", "/auth/logout", "/auth/csrf-token", "/h2-console/**"));
+                .requestMatchers("/roles", "/auth/login", "/register", "/auth/logout", "/auth/csrf-token", "/h2-console/**"));
     }
 }

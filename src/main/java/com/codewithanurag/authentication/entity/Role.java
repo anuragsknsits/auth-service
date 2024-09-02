@@ -5,15 +5,18 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-
-import java.util.Set;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "roles")
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class Role {
 
     @Id
@@ -25,10 +28,10 @@ public class Role {
 
     private String description;
 
-    @OneToMany(mappedBy = "role")
+    /*@OneToMany(mappedBy = "role")
     private Set<UserDTO> userDTOS;
 
     @OneToMany(mappedBy = "role")
-    private Set<RolePermission> rolePermissions;
+    private Set<RolePermission> rolePermissions;*/
 
 }
