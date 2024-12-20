@@ -4,7 +4,7 @@ server:
     context-path: /auth
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/vkadfirm
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/vkadfirm
     username: root
     password: MyPass!123
     driver-class-name: com.mysql.cj.jdbc.Driver

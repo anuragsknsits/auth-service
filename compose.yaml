@@ -1,17 +1,13 @@
 services:
-  gateway:
+  authorization:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: auth-service-container
     ports:
       - "8081:8081"
-    depends_on:
-      - mysql
-    networks:
-      - microservice-network
     environment:
-      SPRING_DATASOUCE_URL: jdbc:mysql://mysql:3306/vkadfirm
+      SPRING_DATASOUCE_URL: jdbc:mysql://mysql:3307/vkadfirm
       SPRING_DATASOUCE_USERNAME: root
       SPRING_DATASOUCE_PASSWORD: MyPass!123
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
@@ -19,13 +15,17 @@ services:
       SPRING_PROFILES_ACTIVE: docker
     restart: always
   mysql:
-    image: mysql
-    container_name: mysql-container
+    image: mysql:8.0.40
+    container_name: mysqldb
     environment:
       MYSQL_ROOT_PASSWORD: MyPass!123
       MYSQL_DATABASE: vkadfirm
+      MYSQL_USER: root
+      MYSQL_PASSWORD: MyPass!123
+    depends_on:
+      - mysql
     ports:
-      - "3306:3306"
+      - "3307:3306"
     networks:
       - microservice-network
     volumes:
@@ -33,7 +33,6 @@ services:
     restart: always
 networks:
   microservice-network:
-    driver: bridge
     external: true
 
 volumes:
