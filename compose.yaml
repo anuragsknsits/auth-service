@@ -1,0 +1,41 @@
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auth-service-container
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mysql
+    networks:
+      - microservice-network
+    environment:
+      SPRING_DATASOUCE_URL: jdbc:mysql://mysql:3306/vkadfirm
+      SPRING_DATASOUCE_USERNAME: root
+      SPRING_DATASOUCE_PASSWORD: MyPass!123
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
+      JWT_SECRET: cGFzc3dvcmRAdmthZEFzc29jaWF0ZSNUcnVlQ29kZXI=
+      SPRING_PROFILES_ACTIVE: docker
+    restart: always
+  mysql:
+    image: mysql
+    container_name: mysql-container
+    environment:
+      MYSQL_ROOT_PASSWORD: MyPass!123
+      MYSQL_DATABASE: vkadfirm
+    ports:
+      - "3306:3306"
+    networks:
+      - microservice-network
+    volumes:
+      - mysql-data: /var/lib/mysql
+    restart: always
+networks:
+  microservice-network:
+    driver: bridge
+    external: true
+
+volumes:
+  mysql-data:
+    driver: local
