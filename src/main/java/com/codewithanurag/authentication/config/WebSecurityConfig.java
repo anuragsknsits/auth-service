@@ -3,6 +3,7 @@ package com.codewithanurag.authentication.config;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -33,14 +34,14 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/roles", "/register", "/auth/login", "/auth/logout", "/auth/csrf-token", "/h2-console/**")
+                        .requestMatchers("/roles", "/register", "/login", "/auth/login", "/auth/logout", "/auth/csrf-token", "/h2-console/**")
                         .permitAll()
-                        .requestMatchers("/users/**").hasAnyAuthority("ADMIN", "MANAGER", "HR", "CLERK", "ENDUSER")
+                        //.requestMatchers("/users/**").hasAnyAuthority("ADMIN", "MANAGER", "HR", "CLERK", "ENDUSER")
                         /*.requestMatchers("/roles/**").hasAuthority("ADMIN")*/
                         .anyRequest().authenticated())
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringRequestMatchers("/h2-console/**", "/auth/login"))
+                        .ignoringRequestMatchers("/h2-console/**"))
                 .logout(logout -> logout
                         .logoutUrl("/auth/logout")
                         .deleteCookies("JSESSIONID", "jwt", "XSRF-TOKEN")
@@ -50,6 +51,8 @@ public class WebSecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Use stateless session
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(exceptionHandlingConfigurer -> exceptionHandlingConfigurer
+                        .accessDeniedHandler((request, response, accessDeniedException) -> response.setStatus(HttpStatus.UNAUTHORIZED.value())))
                 .userDetailsService(userDetailsService)
                 .build();
     }
@@ -68,6 +71,6 @@ public class WebSecurityConfig {
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web -> web
                 .ignoring()
-                .requestMatchers("/roles", "/auth/login", "/register", "/auth/logout", "/auth/csrf-token", "/h2-console/**"));
+                .requestMatchers("/roles", "/auth/login", "/login", "/register", "/auth/logout", "/auth/csrf-token", "/h2-console/**"));
     }
 }

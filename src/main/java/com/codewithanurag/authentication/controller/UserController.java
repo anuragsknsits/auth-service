@@ -2,12 +2,12 @@ package com.codewithanurag.authentication.controller;
 
 import com.codewithanurag.authentication.model.AuthResponse;
 import com.codewithanurag.authentication.model.AuthenticationRequest;
+import com.codewithanurag.authentication.model.ChangePassword;
 import com.codewithanurag.authentication.model.SignUp;
 import com.codewithanurag.authentication.service.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,7 +20,6 @@ import java.util.Optional;
 @RestController
 public class UserController {
 
-    @Autowired
     private final UserService userService;
 
     public UserController(UserService userService) {
@@ -76,5 +75,13 @@ public class UserController {
         Optional<Cookie> optionalCookie = Arrays.stream(request.getCookies()).filter(cookie -> cookie.getName().equals("jwt")).findFirst();
         String token = optionalCookie.map(Cookie::getValue).orElse(null);
         return userService.getUserName(token);
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<String> changePassword(@RequestBody ChangePassword changePassword, HttpServletRequest request) {
+        Optional<Cookie> optionalCookie = Arrays.stream(request.getCookies()).filter(cookie -> cookie.getName().equals("jwt")).findFirst();
+        String token = optionalCookie.map(Cookie::getValue).orElse(null);
+        String userName = userService.getUserName(token);
+        return ResponseEntity.ok(userService.changePassword(userName, changePassword));
     }
 }
