@@ -28,60 +28,63 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<String> registerUser(@RequestBody SignUp registerRequest) {
-        try {
-            userService.registerUser(registerRequest);
-            return ResponseEntity.ok("User registered successfully");
-        } catch (Exception e) {
-            return ResponseEntity.status(400).body(e.getMessage());
-        }
+        userService.registerUser(registerRequest);
+        return ResponseEntity.ok("User registered successfully");
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> loginUser(@RequestBody AuthenticationRequest authenticationRequest, HttpServletResponse response) {
-        try {
-            String token = userService.authenticateUser(authenticationRequest);
-            Cookie jwtCookie = new Cookie("jwt", token);
-            jwtCookie.setHttpOnly(true);
-            jwtCookie.setSecure(true);
-            jwtCookie.setPath("/");
-            jwtCookie.setMaxAge(24 * 60 * 60);
-            response.addCookie(jwtCookie);
-            return ResponseEntity.ok(new AuthResponse(authenticationRequest.getEmailId(), token));
-        } catch (Exception e) {
-            return ResponseEntity.status(401).body(null);
-        }
+        String token = userService.authenticateUser(authenticationRequest);
+        setJwtCookie(response, token);
+        return ResponseEntity.ok(new AuthResponse(authenticationRequest.getEmailId(), token));
     }
 
     @PostMapping("/logout")
-    public String logout(HttpServletRequest request, HttpServletResponse response) {
-        // Invalidate JWT Token (optional: depends on your strategy)
-        // Clear JWT cookie
-        for (Cookie jwtCookie : request.getCookies()) {
-            jwtCookie.setValue(null);
-            jwtCookie.setHttpOnly(true);
-            jwtCookie.setSecure(true);
-            jwtCookie.setPath("/");
-            jwtCookie.setMaxAge(0); // Delete the cookie
-            response.addCookie(jwtCookie);
-        }
-        // Invalidate session (if applicable)
-        request.getSession().invalidate();
+    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
+        Optional.ofNullable(request.getCookies())
+                .flatMap(cookies -> Arrays.stream(cookies).filter(cookie -> "authToken".equals(cookie.getName())).findFirst())
+                .ifPresent(cookie -> {
+                    cookie.setValue(null);
+                    cookie.setMaxAge(0);
+                    cookie.setPath("/");
+                    cookie.setHttpOnly(true);
+                    cookie.setSecure(true);
+                    response.addCookie(cookie);
+                });
 
-        return "Logged out successfully";
+        request.getSession().invalidate(); // Invalidate session
+        return ResponseEntity.ok("Logged out successfully");
     }
 
     @GetMapping("/verifyToken")
-    public String verifyToken(HttpServletRequest request) {
-        Optional<Cookie> optionalCookie = Arrays.stream(request.getCookies()).filter(cookie -> cookie.getName().equals("jwt")).findFirst();
-        String token = optionalCookie.map(Cookie::getValue).orElse(null);
-        return userService.getUserName(token);
+    public ResponseEntity<String> verifyToken(HttpServletRequest request) {
+        return getAuthTokenFromCookies(request)
+                .map(userService::getUserName)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.badRequest().body("Invalid token"));
     }
 
     @PostMapping("/change-password")
-    public ResponseEntity<String> changePassword(@RequestBody ChangePassword changePassword, HttpServletRequest request) {
-        Optional<Cookie> optionalCookie = Arrays.stream(request.getCookies()).filter(cookie -> cookie.getName().equals("jwt")).findFirst();
-        String token = optionalCookie.map(Cookie::getValue).orElse(null);
-        String userName = userService.getUserName(token);
-        return ResponseEntity.ok(userService.changePassword(userName, changePassword));
+    public ResponseEntity<String> changePassword(@RequestBody ChangePassword changePassword, HttpServletRequest request, HttpServletResponse response) {
+        return getAuthTokenFromCookies(request)
+                .map(userService::getUserName)
+                .map(userName -> {
+                    String newToken = userService.changePassword(userName, changePassword);
+                    setJwtCookie(response, newToken);
+                    return ResponseEntity.ok("Password changed successfully");
+                })
+                .orElse(ResponseEntity.status(401).body("Unauthorized request"));
+    }
+
+    private void setJwtCookie(HttpServletResponse response, String token) {
+        response.addHeader("Set-Cookie", "authToken=" + token + "; Path=/; HttpOnly; Secure; SameSite=Strict");
+    }
+
+    private Optional<String> getAuthTokenFromCookies(HttpServletRequest request) {
+        return Optional.ofNullable(request.getCookies())
+                .flatMap(cookies -> Arrays.stream(cookies)
+                        .filter(cookie -> "authToken".equals(cookie.getName()))
+                        .map(Cookie::getValue)
+                        .findFirst());
     }
 }

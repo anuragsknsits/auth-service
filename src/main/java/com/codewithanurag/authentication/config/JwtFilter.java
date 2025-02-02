@@ -38,7 +38,7 @@ public class JwtFilter extends OncePerRequestFilter {
             String jwt = authorizationHeader != null && authorizationHeader.startsWith("Bearer ") ?
                     authorizationHeader.substring(7) :
                     Arrays.stream(request.getCookies())
-                            .filter(cookie -> "jwt".equals(cookie.getName()))
+                            .filter(cookie -> "authToken".equals(cookie.getName()))
                             .findFirst().map(Cookie::getValue).orElse(null);
 
             String userName = null;
