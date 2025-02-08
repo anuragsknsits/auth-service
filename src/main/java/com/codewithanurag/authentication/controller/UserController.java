@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -42,16 +43,18 @@ public class UserController {
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
-        Optional.ofNullable(request.getCookies())
-                .flatMap(cookies -> Arrays.stream(cookies).filter(cookie -> "authToken".equals(cookie.getName())).findFirst())
-                .ifPresent(cookie -> {
-                    cookie.setValue(null);
-                    cookie.setMaxAge(0);
-                    cookie.setPath("/");
-                    cookie.setHttpOnly(true);
-                    cookie.setSecure(true);
-                    response.addCookie(cookie);
-                });
+        List<String> cookiesToDelete = List.of("JSESSIONID", "authToken", "XSRF-TOKEN");
+        Optional.ofNullable(request.getCookies()).ifPresent(cookies -> {
+            Arrays.stream(cookies).filter(cookie -> cookiesToDelete.contains(cookie.getName()))
+                    .forEach(cookie -> {
+                        cookie.setValue(null);
+                        cookie.setMaxAge(0);
+                        cookie.setPath("/");
+                        cookie.setHttpOnly(true);
+                        cookie.setSecure(true);
+                        response.addCookie(cookie);
+                    });
+        });
 
         request.getSession().invalidate(); // Invalidate session
         return ResponseEntity.ok("Logged out successfully");
