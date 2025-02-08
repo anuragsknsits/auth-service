@@ -5,11 +5,13 @@ import com.codewithanurag.authentication.model.AuthenticationRequest;
 import com.codewithanurag.authentication.model.ChangePassword;
 import com.codewithanurag.authentication.model.SignUp;
 import com.codewithanurag.authentication.service.UserService;
-import jakarta.servlet.http.Cookie;
+import com.codewithanurag.authentication.util.CommonUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.util.Pair;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -62,16 +64,16 @@ public class UserController {
 
     @GetMapping("/verifyToken")
     public ResponseEntity<String> verifyToken(HttpServletRequest request) {
-        return getAuthTokenFromCookies(request)
+        return CommonUtils.getValueFromCookies(request, "authToken")
                 .map(userService::getUserName)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.badRequest().body("Invalid token"));
     }
 
     @PostMapping("/change-password")
-    public ResponseEntity<String> changePassword(@RequestBody ChangePassword changePassword, HttpServletRequest request, HttpServletResponse response) {
-        return getAuthTokenFromCookies(request)
-                .map(userService::getUserName)
+    public ResponseEntity<String> changePassword(@RequestBody ChangePassword changePassword, @AuthenticationPrincipal UserDetails userDetails,
+                                                 HttpServletResponse response) {
+        return Optional.of(userDetails.getUsername())
                 .map(userName -> {
                     String newToken = userService.changePassword(userName, changePassword);
                     setJwtCookie(response, newToken);
@@ -82,13 +84,5 @@ public class UserController {
 
     private void setJwtCookie(HttpServletResponse response, String token) {
         response.addHeader("Set-Cookie", "authToken=" + token + "; Path=/; HttpOnly; Secure; SameSite=Strict");
-    }
-
-    private Optional<String> getAuthTokenFromCookies(HttpServletRequest request) {
-        return Optional.ofNullable(request.getCookies())
-                .flatMap(cookies -> Arrays.stream(cookies)
-                        .filter(cookie -> "authToken".equals(cookie.getName()))
-                        .map(Cookie::getValue)
-                        .findFirst());
     }
 }

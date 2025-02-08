@@ -2,11 +2,14 @@ package com.codewithanurag.authentication.service.impl;
 
 import com.codewithanurag.authentication.entity.Role;
 import com.codewithanurag.authentication.entity.UserDTO;
+import com.codewithanurag.authentication.entity.UserProfile;
 import com.codewithanurag.authentication.model.AuthResponse;
 import com.codewithanurag.authentication.model.AuthenticationRequest;
 import com.codewithanurag.authentication.model.ChangePassword;
+import com.codewithanurag.authentication.model.Profile;
 import com.codewithanurag.authentication.model.SignUp;
 import com.codewithanurag.authentication.repository.RoleRepository;
+import com.codewithanurag.authentication.repository.UserProfileRepository;
 import com.codewithanurag.authentication.repository.UserRepository;
 import com.codewithanurag.authentication.service.UserService;
 import com.codewithanurag.authentication.util.JWTUtil;
@@ -21,15 +24,18 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-
+    private final UserProfileRepository userProfileRepository;
     private final RoleRepository roleRepository;
-
     private final PasswordEncoder passwordEncoder;
-
     private final JWTUtil jwtUtil;
 
-    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, JWTUtil jwtUtil) {
+    public UserServiceImpl(UserRepository userRepository,
+                           UserProfileRepository userProfileRepository,
+                           RoleRepository roleRepository,
+                           PasswordEncoder passwordEncoder,
+                           JWTUtil jwtUtil) {
         this.userRepository = userRepository;
+        this.userProfileRepository = userProfileRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
@@ -40,12 +46,14 @@ public class UserServiceImpl implements UserService {
         UserDTO userDTO = new UserDTO();
         userDTO.setEmail(signUp.getEmailId());
         userDTO.setPassword(passwordEncoder.encode(signUp.getPassword()));
-        userDTO.setFirstName("");
-        userDTO.setLastName("");
         userDTO.setActive(true);
 
         List<Role> roleList = roleRepository.findAll();
         Role role = roleList.stream().filter(userRole -> userRole.getName().equals("ADMIN")).findFirst().orElse(null);
+
+        if (role == null) {
+            throw new RuntimeException("Role not found!");
+        }
 
         userDTO.setRole(role);
         userRepository.save(userDTO);
@@ -53,15 +61,22 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Pair<String, AuthResponse> authenticateUser(AuthenticationRequest authenticationRequest) {
-        UserDTO userDTO = userRepository.findByEmail(authenticationRequest.getEmailId()).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        if (userDTO != null && passwordEncoder.matches(authenticationRequest.getPassword(), userDTO.getPassword())) {
+        UserDTO userDTO = userRepository.findByEmail(authenticationRequest.getEmailId())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        if (passwordEncoder.matches(authenticationRequest.getPassword(), userDTO.getPassword())) {
             String token = jwtUtil.generateToken(userDTO.getEmail());
-            AuthResponse response = new AuthResponse(userDTO.getFirstName(), userDTO.getEmail(), userDTO.getRole().getName());
+            String userName = userDTO.getUserProfile() != null ? userDTO.getUserProfile().getFirstName() : null;
+            AuthResponse response = new AuthResponse(
+                    userName,
+                    userDTO.getEmail(),
+                    userDTO.getRole().getName()
+            );
             return Pair.of(token, response);
         }
+
         throw new RuntimeException("Invalid credentials");
     }
-
 
     @Override
     public String getUserName(String token) {
@@ -70,18 +85,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void updateUser(Long userId, SignUp signUp) {
-        // Find existing user
         UserDTO userDTO = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        // Update user details
+
         userDTO.setEmail(signUp.getEmailId());
         userDTO.setPassword(passwordEncoder.encode(signUp.getPassword()));
 
-        // Find role based on roleId
-        /*Role role = roleRepository.findByName(signUp.getRole())
+        /*Role role = roleRepository.findById(signUp.getRoleId())
                 .orElseThrow(() -> new RuntimeException("Role not found"));
-        userDTO.setFirstName(signUp.getFirstName());
-        userDTO.setLastName(signUp.getLastName());
+
         userDTO.setRole(role);*/
 
         userRepository.save(userDTO);
@@ -89,29 +101,51 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(Long userId) {
-        // Find existing user
         UserDTO userDTO = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Make user inactive
         userDTO.setActive(false);
-
-        // Optionally: Remove user from role assignments (if applicable)
-//        employeeRoleAssignmentRepository.deleteByUserDTO_Id(userId); // Assuming this method exists
-
-        // Save the updated user entity
         userRepository.save(userDTO);
     }
 
     @Override
     public String changePassword(String userName, ChangePassword changePassword) {
-        UserDTO userDTO = userRepository.findByEmail(userName).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        if (userDTO != null && passwordEncoder.matches(changePassword.oldPassword(), userDTO.getPassword())) {
+        UserDTO userDTO = userRepository.findByEmail(userName)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        if (passwordEncoder.matches(changePassword.oldPassword(), userDTO.getPassword())) {
             userDTO.setPassword(passwordEncoder.encode(changePassword.newPassword()));
-            UserDTO dto = userRepository.save(userDTO);
-            return jwtUtil.generateToken(dto.getEmail());
+            userRepository.save(userDTO);
+            return jwtUtil.generateToken(userDTO.getEmail());
         }
+
         throw new RuntimeException("Invalid credentials");
     }
-}
 
+    public UserProfile getUserProfile(String email) {
+        UserDTO user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        return userProfileRepository.findByUser(user)
+                .orElse(new UserProfile());
+    }
+
+    public UserProfile updateUserProfile(String email, Profile updatedProfile) {
+        UserDTO user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        UserProfile profile = userProfileRepository.findByUser(user).orElse(new UserProfile());
+
+        if (profile.getUser() == null) {
+            profile.setUser(user);
+        }
+
+        profile.setFirstName(updatedProfile.getFirstName());
+        profile.setLastName(updatedProfile.getLastName());
+        profile.setPhoneNumber(updatedProfile.getPhoneNumber());
+        profile.setPanCard(updatedProfile.getPanCard());
+        profile.setAddress(updatedProfile.getAddress());
+
+        return userProfileRepository.save(profile);
+    }
+}
