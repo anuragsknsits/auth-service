@@ -1,13 +1,15 @@
 package com.codewithanurag.authentication.service;
 
+import com.codewithanurag.authentication.model.AuthResponse;
 import com.codewithanurag.authentication.model.AuthenticationRequest;
 import com.codewithanurag.authentication.model.ChangePassword;
 import com.codewithanurag.authentication.model.SignUp;
+import org.springframework.data.util.Pair;
 
 public interface UserService {
     void registerUser(SignUp signUp);
 
-    String authenticateUser(AuthenticationRequest authenticationRequest);
+    Pair<String, AuthResponse> authenticateUser(AuthenticationRequest authenticationRequest);
 
     String getUserName(String token);
 

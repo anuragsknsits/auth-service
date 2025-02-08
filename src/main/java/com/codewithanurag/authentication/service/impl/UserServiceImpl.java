@@ -2,6 +2,7 @@ package com.codewithanurag.authentication.service.impl;
 
 import com.codewithanurag.authentication.entity.Role;
 import com.codewithanurag.authentication.entity.UserDTO;
+import com.codewithanurag.authentication.model.AuthResponse;
 import com.codewithanurag.authentication.model.AuthenticationRequest;
 import com.codewithanurag.authentication.model.ChangePassword;
 import com.codewithanurag.authentication.model.SignUp;
@@ -9,6 +10,7 @@ import com.codewithanurag.authentication.repository.RoleRepository;
 import com.codewithanurag.authentication.repository.UserRepository;
 import com.codewithanurag.authentication.service.UserService;
 import com.codewithanurag.authentication.util.JWTUtil;
+import org.springframework.data.util.Pair;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -50,10 +52,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String authenticateUser(AuthenticationRequest authenticationRequest) {
+    public Pair<String, AuthResponse> authenticateUser(AuthenticationRequest authenticationRequest) {
         UserDTO userDTO = userRepository.findByEmail(authenticationRequest.getEmailId()).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         if (userDTO != null && passwordEncoder.matches(authenticationRequest.getPassword(), userDTO.getPassword())) {
-            return jwtUtil.generateToken(userDTO.getEmail());
+            String token = jwtUtil.generateToken(userDTO.getEmail());
+            AuthResponse response = new AuthResponse(userDTO.getFirstName(), userDTO.getEmail(), userDTO.getRole().getName());
+            return Pair.of(token, response);
         }
         throw new RuntimeException("Invalid credentials");
     }

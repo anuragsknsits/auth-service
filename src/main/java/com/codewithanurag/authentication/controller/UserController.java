@@ -8,6 +8,7 @@ import com.codewithanurag.authentication.service.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.data.util.Pair;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,9 +35,9 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> loginUser(@RequestBody AuthenticationRequest authenticationRequest, HttpServletResponse response) {
-        String token = userService.authenticateUser(authenticationRequest);
-        setJwtCookie(response, token);
-        return ResponseEntity.ok(new AuthResponse(authenticationRequest.getEmailId(), token));
+        Pair<String, AuthResponse> responsePair = userService.authenticateUser(authenticationRequest);
+        setJwtCookie(response, responsePair.getFirst());
+        return ResponseEntity.ok(responsePair.getSecond());
     }
 
     @PostMapping("/logout")
