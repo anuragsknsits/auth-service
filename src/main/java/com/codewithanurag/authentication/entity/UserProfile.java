@@ -37,7 +37,7 @@ public class UserProfile {
 
     private String firstName;
     private String lastName;
-    private Long phoneNumber;
+    private String phoneNumber;
     @Column(name = "pancard")
     private String panCard;
 

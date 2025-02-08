@@ -21,7 +21,7 @@ public interface UserService {
 
     String changePassword(String userName, ChangePassword changePassword);
 
-    UserProfile getUserProfile(String username);
+    Profile getUserProfile(String username);
 
     UserProfile updateUserProfile(String username, Profile updatedProfile);
 }

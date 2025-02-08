@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.util.Pair;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -63,11 +64,11 @@ public class UserController {
     }
 
     @GetMapping("/verifyToken")
-    public ResponseEntity<String> verifyToken(HttpServletRequest request) {
-        return CommonUtils.getValueFromCookies(request, "authToken")
-                .map(userService::getUserName)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.badRequest().body("Invalid token"));
+    public ResponseEntity<AuthResponse> verifyToken(HttpServletRequest request, @AuthenticationPrincipal UserDetails userDetails) {
+        String email = CommonUtils.getValueFromCookies(request, "authToken")
+                .map(userService::getUserName).orElseThrow(() -> new RuntimeException("Invalid Token"));
+        String role = userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).findFirst().orElse(null);
+        return ResponseEntity.ok(new AuthResponse("", email, role));
     }
 
     @PostMapping("/change-password")

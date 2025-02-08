@@ -28,8 +28,8 @@ public class UserManagementController {
     }
 
     @GetMapping
-    public ResponseEntity<UserProfile> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
-        UserProfile profile = userService.getUserProfile(userDetails.getUsername());
+    public ResponseEntity<Profile> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
+        Profile profile = userService.getUserProfile(userDetails.getUsername());
         return ResponseEntity.ok(profile);
     }
 

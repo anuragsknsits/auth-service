@@ -101,8 +101,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(Long userId) {
-        UserDTO userDTO = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        UserDTO userDTO = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
         userDTO.setActive(false);
         userRepository.save(userDTO);
@@ -110,8 +109,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String changePassword(String userName, ChangePassword changePassword) {
-        UserDTO userDTO = userRepository.findByEmail(userName)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        UserDTO userDTO = userRepository.findByEmail(userName).orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         if (passwordEncoder.matches(changePassword.oldPassword(), userDTO.getPassword())) {
             userDTO.setPassword(passwordEncoder.encode(changePassword.newPassword()));
@@ -122,17 +120,18 @@ public class UserServiceImpl implements UserService {
         throw new RuntimeException("Invalid credentials");
     }
 
-    public UserProfile getUserProfile(String email) {
-        UserDTO user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    @Override
+    public Profile getUserProfile(String email) {
+        UserDTO user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        return userProfileRepository.findByUser(user)
-                .orElse(new UserProfile());
+        UserProfile userProfile = userProfileRepository.findByUser(user).orElse(new UserProfile());
+        return Profile.builder().address(userProfile.getAddress()).phoneNumber(userProfile.getPhoneNumber())
+                .panCard(userProfile.getPanCard()).firstName(userProfile.getFirstName()).lastName(userProfile.getLastName()).build();
     }
 
+    @Override
     public UserProfile updateUserProfile(String email, Profile updatedProfile) {
-        UserDTO user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        UserDTO user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         UserProfile profile = userProfileRepository.findByUser(user).orElse(new UserProfile());
 
