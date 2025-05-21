@@ -24,4 +24,6 @@ public interface UserService {
     Profile getUserProfile(String username);
 
     UserProfile updateUserProfile(String username, Profile updatedProfile);
+
+    void forgetPassword(String email);
 }

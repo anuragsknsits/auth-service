@@ -48,14 +48,15 @@ public class UserServiceImpl implements UserService {
         userDTO.setPassword(passwordEncoder.encode(signUp.getPassword()));
         userDTO.setActive(true);
 
-        List<Role> roleList = roleRepository.findAll();
-        Role role = roleList.stream().filter(userRole -> userRole.getName().equals("ADMIN")).findFirst().orElse(null);
+        if (userDTO.getRole() == null) {
+            List<Role> roleList = roleRepository.findAll();
+            Role role = roleList.stream().filter(userRole -> userRole.getName().equals("ADMIN")).findFirst().orElse(null);
 
-        if (role == null) {
-            throw new RuntimeException("Role not found!");
+            if (role == null) {
+                throw new RuntimeException("Role not found!");
+            }
+            userDTO.setRole(role);
         }
-
-        userDTO.setRole(role);
         userRepository.save(userDTO);
     }
 
@@ -146,5 +147,24 @@ public class UserServiceImpl implements UserService {
         profile.setAddress(updatedProfile.getAddress());
 
         return userProfileRepository.save(profile);
+    }
+
+    @Override
+    public void forgetPassword(String email) {
+        UserDTO userDTO = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        //send email to personal mail
+        userDTO.setPassword(passwordEncoder.encode("Qwerty@123"));
+        userDTO.setActive(true);
+
+        if (userDTO.getRole() == null) {
+            List<Role> roleList = roleRepository.findAll();
+            Role role = roleList.stream().filter(userRole -> userRole.getName().equals("ADMIN")).findFirst().orElse(null);
+
+            if (role == null) {
+                throw new RuntimeException("Role not found!");
+            }
+            userDTO.setRole(role);
+        }
+        userRepository.save(userDTO);
     }
 }

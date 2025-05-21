@@ -3,6 +3,7 @@ package com.codewithanurag.authentication.controller;
 import com.codewithanurag.authentication.model.AuthResponse;
 import com.codewithanurag.authentication.model.AuthenticationRequest;
 import com.codewithanurag.authentication.model.ChangePassword;
+import com.codewithanurag.authentication.model.ForgotEmail;
 import com.codewithanurag.authentication.model.SignUp;
 import com.codewithanurag.authentication.service.UserService;
 import com.codewithanurag.authentication.util.CommonUtils;
@@ -47,17 +48,16 @@ public class UserController {
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
         List<String> cookiesToDelete = List.of("JSESSIONID", "authToken", "XSRF-TOKEN");
-        Optional.ofNullable(request.getCookies()).ifPresent(cookies -> {
-            Arrays.stream(cookies).filter(cookie -> cookiesToDelete.contains(cookie.getName()))
-                    .forEach(cookie -> {
-                        cookie.setValue(null);
-                        cookie.setMaxAge(0);
-                        cookie.setPath("/");
-                        cookie.setHttpOnly(true);
-                        cookie.setSecure(true);
-                        response.addCookie(cookie);
-                    });
-        });
+        Optional.ofNullable(request.getCookies()).ifPresent(cookies -> Arrays.stream(cookies)
+                .filter(cookie -> cookiesToDelete.contains(cookie.getName()))
+                .forEach(cookie -> {
+                    cookie.setValue(null);
+                    cookie.setMaxAge(0);
+                    cookie.setPath("/");
+                    cookie.setHttpOnly(true);
+                    cookie.setSecure(true);
+                    response.addCookie(cookie);
+                }));
 
         request.getSession().invalidate(); // Invalidate session
         return ResponseEntity.ok("Logged out successfully");
@@ -68,7 +68,7 @@ public class UserController {
         String email = CommonUtils.getValueFromCookies(request, "authToken")
                 .map(userService::getUserName).orElseThrow(() -> new RuntimeException("Invalid Token"));
         String role = userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).findFirst().orElse(null);
-        return ResponseEntity.ok(new AuthResponse("", email, role));
+        return ResponseEntity.ok(new AuthResponse("Mairaj", email, role));
     }
 
     @PostMapping("/change-password")
@@ -85,5 +85,11 @@ public class UserController {
 
     private void setJwtCookie(HttpServletResponse response, String token) {
         response.addHeader("Set-Cookie", "authToken=" + token + "; Path=/; HttpOnly; Secure; SameSite=Strict");
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgetPassword(@RequestBody ForgotEmail forgotEmail) {
+        userService.forgetPassword(forgotEmail.email());
+        return ResponseEntity.ok("Password reset link sent to your email if it exists in our system.");
     }
 }

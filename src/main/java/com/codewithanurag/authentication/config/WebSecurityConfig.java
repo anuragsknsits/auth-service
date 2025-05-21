@@ -34,7 +34,7 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/roles", "/register", "/login", "/h2-console/**")
+                        .requestMatchers("/roles", "/register", "/auth/login", "/forgot-password", "/login", "/h2-console/**")
                         .permitAll()
                         //.requestMatchers("/users/**").hasAnyAuthority("ADMIN", "MANAGER", "HR", "CLERK", "ENDUSER")
                         /*.requestMatchers("/roles/**").hasAuthority("ADMIN")*/
@@ -44,8 +44,9 @@ public class WebSecurityConfig {
                         .ignoringRequestMatchers("/h2-console/**"))
                 .logout(logout -> logout
                         .logoutUrl("/auth/logout")
-                        .deleteCookies("JSESSIONID", "jwt", "XSRF-TOKEN")
+                        .deleteCookies("JSESSIONID", "authToken", "XSRF-TOKEN")
                         .invalidateHttpSession(true)
+                        .clearAuthentication(true)
                         .logoutSuccessHandler((request, response, authentication) -> response.setStatus(HttpServletResponse.SC_OK)))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .sessionManagement(session -> session

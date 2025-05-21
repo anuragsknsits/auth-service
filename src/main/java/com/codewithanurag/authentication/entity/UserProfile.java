@@ -32,6 +32,7 @@ public class UserProfile {
     private Long id;
 
     @OneToOne
+    @ToString.Exclude
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private UserDTO user;
 
